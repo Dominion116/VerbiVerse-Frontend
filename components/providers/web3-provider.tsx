@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import { EthereumProvider } from "@walletconnect/ethereum-provider";
 
 type WalletContextType = {
@@ -18,32 +18,35 @@ export function useWallet() {
   return context;
 }
 
-export default function Web3Provider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function Web3Provider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
   const [provider, setProvider] = useState<any>(null);
 
-  // Initialize WalletConnect provider
+  const didInit = useRef(false);
+
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
+
     const initProvider = async () => {
       try {
+        // 🔑 Clear stale sessions (fixes "session topic doesn't exist")
+        localStorage.removeItem("wc@2:client:0.3//session");
+
         const wcProvider = await EthereumProvider.init({
           projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
-          chains: [1], // mainnet
+          chains: [1], // Ethereum Mainnet (change to 11155111 for Sepolia testnet)
           showQrModal: true,
         });
 
         setProvider(wcProvider);
 
-        // restore existing session if available
+        // 🔑 Restore valid session if it exists
         if (wcProvider.session) {
-          const accounts = wcProvider.session.namespaces.eip155.accounts;
+          const accounts = wcProvider.session.namespaces.eip155?.accounts || [];
           if (accounts.length > 0) {
-            const addr = accounts[0].split(":")[2]; // e.g. "eip155:1:0x1234..."
+            const addr = accounts[0].split(":")[2]; // format: "eip155:1:0x1234..."
             setAddress(addr);
             setIsConnected(true);
           }
@@ -59,14 +62,14 @@ export default function Web3Provider({
           setIsConnected(false);
         });
       } catch (err) {
-        console.error("Failed to init WalletConnect", err);
+        console.error("Failed to init WalletConnect:", err);
       }
     };
 
     initProvider();
   }, []);
 
-  // Connect wallet
+  // 🔑 Connect wallet
   const connect = async () => {
     if (!provider) return;
     try {
@@ -74,17 +77,17 @@ export default function Web3Provider({
       setAddress(accounts[0]);
       setIsConnected(true);
     } catch (err) {
-      console.error("WalletConnect connection failed", err);
+      console.error("WalletConnect connection failed:", err);
     }
   };
 
-  // Disconnect wallet
+  // 🔑 Disconnect wallet
   const disconnect = async () => {
     if (!provider) return;
     try {
-      await provider.disconnect(); // closes WC session
+      await provider.disconnect();
     } catch (err) {
-      console.warn("Provider already disconnected:", err);
+      console.warn("Session already cleared:", err);
     } finally {
       setAddress(null);
       setIsConnected(false);
@@ -92,14 +95,7 @@ export default function Web3Provider({
   };
 
   return (
-    <WalletContext.Provider
-      value={{
-        connect,
-        disconnect: () => provider?.disconnect(),
-        address,
-        isConnected,
-      }}
-    >
+    <WalletContext.Provider value={{ connect, disconnect, address, isConnected }}>
       {children}
     </WalletContext.Provider>
   );
