@@ -1,53 +1,71 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { useState, useEffect, createContext, useContext } from "react";
+import { EthereumProvider } from "@walletconnect/ethereum-provider";
 
-interface WalletContextType {
-  isConnected: boolean
-  address: string | null
-  connect: () => Promise<void>
-  disconnect: () => void
-}
+type WalletContextType = {
+  connect: () => Promise<void>;
+  address: string | null;
+  isConnected: boolean;
+};
 
-const WalletContext = createContext<WalletContextType | null>(null)
+const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function useWallet() {
-  const context = useContext(WalletContext)
-  if (!context) {
-    throw new Error("useWallet must be used within Web3Provider")
-  }
-  return context
+  const context = useContext(WalletContext);
+  if (!context) throw new Error("useWallet must be used within Web3Provider");
+  return context;
 }
 
-export default function Web3Provider({ children }: { children: ReactNode }) {
-  const [isConnected, setIsConnected] = useState(false)
-  const [address, setAddress] = useState<string | null>(null)
+export default function Web3Provider({ children }: { children: React.ReactNode }) {
+  const [isConnected, setIsConnected] = useState(false);
+  const [address, setAddress] = useState<string | null>(null);
+  const [provider, setProvider] = useState<EthereumProvider | null>(null);
 
-  const connect = async () => {
-    // Mock wallet connection
-    if (typeof window !== "undefined" && window.ethereum) {
+  // Initialize WalletConnect provider
+  useEffect(() => {
+    const initProvider = async () => {
       try {
-        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" })
-        if (accounts.length > 0) {
-          setAddress(accounts[0])
-          setIsConnected(true)
-        }
-      } catch (error) {
-        console.error("Failed to connect wallet:", error)
-      }
-    } else {
-      // Mock connection for demo
-      setAddress("0x1234567890123456789012345678901234567890")
-      setIsConnected(true)
-    }
-  }
+        const wcProvider = await EthereumProvider.init({
+          projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+          chains: [1], // Ethereum mainnet (change to 11155111 for Sepolia testnet)
+          showQrModal: true,
+        });
 
-  const disconnect = () => {
-    setAddress(null)
-    setIsConnected(false)
-  }
+        setProvider(wcProvider);
+
+        wcProvider.on("accountsChanged", (accounts: string[]) => {
+          setAddress(accounts[0] || null);
+          setIsConnected(accounts.length > 0);
+        });
+
+        wcProvider.on("disconnect", () => {
+          setAddress(null);
+          setIsConnected(false);
+        });
+      } catch (err) {
+        console.error("Failed to init WalletConnect", err);
+      }
+    };
+
+    initProvider();
+  }, []);
+
+  // Connect wallet
+  const connect = async () => {
+    if (!provider) return;
+    try {
+      const accounts = await provider.enable();
+      setAddress(accounts[0]);
+      setIsConnected(true);
+    } catch (err) {
+      console.error("WalletConnect connection failed", err);
+    }
+  };
 
   return (
-    <WalletContext.Provider value={{ isConnected, address, connect, disconnect }}>{children}</WalletContext.Provider>
-  )
+    <WalletContext.Provider value={{ connect, address, isConnected }}>
+      {children}
+    </WalletContext.Provider>
+  );
 }
