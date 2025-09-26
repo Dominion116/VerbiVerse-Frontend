@@ -5,6 +5,7 @@ import { EthereumProvider } from "@walletconnect/ethereum-provider";
 
 type WalletContextType = {
   connect: () => Promise<void>;
+  disconnect: () => Promise<void>;
   address: string | null;
   isConnected: boolean;
 };
@@ -20,7 +21,7 @@ export function useWallet() {
 export default function Web3Provider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
-  const [provider, setProvider] = useState<EthereumProvider | null>(null);
+  const [provider, setProvider] = useState<any>(null);
 
   // Initialize WalletConnect provider
   useEffect(() => {
@@ -64,8 +65,8 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
   };
 
   return (
-    <WalletContext.Provider value={{ connect, address, isConnected }}>
-      {children}
-    </WalletContext.Provider>
-  );
+  <WalletContext.Provider value={{ connect, disconnect: () => provider?.disconnect(), address, isConnected }}>
+    {children}
+  </WalletContext.Provider>
+);
 }

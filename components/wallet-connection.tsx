@@ -1,42 +1,44 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Wallet, Check, Loader2 } from "lucide-react"
-import { useWallet } from "./providers/web3-provider"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Wallet, Check, Loader2 } from "lucide-react";
+import { useWallet } from "./providers/web3-provider";
 
 interface WalletConnectionProps {
-  isConnected: boolean
-  onConnectionChange: (connected: boolean) => void
+  isConnected: boolean;
+  onConnectionChange: (connected: boolean) => void;
 }
 
 export function WalletConnection({ isConnected, onConnectionChange }: WalletConnectionProps) {
-  const { isConnected: walletConnected, address, connect, disconnect } = useWallet()
-  const [isConnecting, setIsConnecting] = useState(false)
+  const { isConnected: walletConnected, address, connect, disconnect } = useWallet();
+  const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
-    onConnectionChange(walletConnected)
-  }, [walletConnected, onConnectionChange])
+    onConnectionChange(walletConnected);
+  }, [walletConnected, onConnectionChange]);
 
   const handleConnect = async () => {
-    setIsConnecting(true)
+    setIsConnecting(true);
     try {
-      await connect()
+      await connect();
     } catch (error) {
-      console.error("Failed to connect wallet:", error)
+      console.error("Failed to connect wallet:", error);
     } finally {
-      setIsConnecting(false)
+      setIsConnecting(false);
     }
-  }
+  };
 
-  const handleDisconnect = () => {
-    disconnect()
-  }
+  const handleDisconnect = async () => {
+    try {
+      await disconnect();
+    } catch (error) {
+      console.error("Failed to disconnect wallet:", error);
+    }
+  };
 
-  const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-  }
+  const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
   if (walletConnected && address) {
     return (
@@ -56,14 +58,16 @@ export function WalletConnection({ isConnected, onConnectionChange }: WalletConn
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-4">
       <div className="text-center p-6 border-2 border-dashed border-muted-foreground/25 rounded-lg">
         <Wallet className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-        <p className="text-sm text-muted-foreground mb-4">Connect your wallet to track progress and earn rewards</p>
+        <p className="text-sm text-muted-foreground mb-4">
+          Connect your wallet to track progress and earn rewards
+        </p>
         <Button onClick={handleConnect} disabled={isConnecting} className="w-full">
           {isConnecting ? (
             <>
@@ -78,7 +82,9 @@ export function WalletConnection({ isConnected, onConnectionChange }: WalletConn
           )}
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground text-center">Connect with MetaMask or other browser wallets</p>
+      <p className="text-xs text-muted-foreground text-center">
+        Connect securely with WalletConnect
+      </p>
     </div>
-  )
+  );
 }
