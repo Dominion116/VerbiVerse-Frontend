@@ -16,21 +16,21 @@ export function ProgressTracker({ currentSession, userStats, className }: Progre
   if (!currentSession) {
     return (
       <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-primary" />
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Your Progress
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{userStats.completedQuizzes}</div>
-              <div className="text-sm text-muted-foreground">Completed</div>
+              <div className="text-xl sm:text-2xl font-bold text-primary">{userStats.completedQuizzes}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{userStats.streakDays}</div>
-              <div className="text-sm text-muted-foreground">Day Streak</div>
+              <div className="text-xl sm:text-2xl font-bold text-primary">{userStats.streakDays}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Day Streak</div>
             </div>
           </div>
         </CardContent>
@@ -46,13 +46,13 @@ export function ProgressTracker({ currentSession, userStats, className }: Progre
     <div className={`space-y-4 ${className}`}>
       {/* Main Progress */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               Quiz Progress
             </CardTitle>
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="w-fit">
               {currentSession.currentQuestionIndex + 1}/{currentSession.questions.length}
             </Badge>
           </div>
@@ -63,22 +63,22 @@ export function ProgressTracker({ currentSession, userStats, className }: Progre
               <span>Progress</span>
               <span>{Math.round(progress)}%</span>
             </div>
-            <Progress value={progress} className="h-3" />
+            <Progress value={progress} className="h-2 sm:h-3" />
           </div>
 
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
             <div>
-              <div className="text-lg font-bold text-primary">{answeredQuestions}</div>
+              <div className="text-base sm:text-lg font-bold text-primary">{answeredQuestions}</div>
               <div className="text-xs text-muted-foreground">Answered</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-primary">
+              <div className="text-base sm:text-lg font-bold text-primary">
                 {currentSession.questions.length - answeredQuestions}
               </div>
               <div className="text-xs text-muted-foreground">Remaining</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-primary">
+              <div className="text-base sm:text-lg font-bold text-primary">
                 {Math.round(currentQuestion?.timeSpent / 1000) || 0}s
               </div>
               <div className="text-xs text-muted-foreground">Current Q</div>
@@ -89,22 +89,22 @@ export function ProgressTracker({ currentSession, userStats, className }: Progre
 
       {/* Session Stats */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-primary" />
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Session Stats
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4 text-center">
             <div>
-              <div className="text-lg font-bold text-primary">
+              <div className="text-base sm:text-lg font-bold text-primary">
                 {Math.round((Date.now() - currentSession.startTime.getTime()) / 1000 / 60)}m
               </div>
               <div className="text-xs text-muted-foreground">Total Time</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-primary">
+              <div className="text-base sm:text-lg font-bold text-primary">
                 {Math.round(
                   currentSession.questions.reduce((sum, q) => sum + q.timeSpent, 0) /
                     1000 /
@@ -121,20 +121,20 @@ export function ProgressTracker({ currentSession, userStats, className }: Progre
       {/* Overall Stats */}
       {userStats.completedQuizzes > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               Overall Stats
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
-                <div className="text-lg font-bold text-primary">{Math.round(userStats.averageScore)}%</div>
+                <div className="text-base sm:text-lg font-bold text-primary">{Math.round(userStats.averageScore)}%</div>
                 <div className="text-xs text-muted-foreground">Avg Score</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-primary">{userStats.streakDays}</div>
+                <div className="text-base sm:text-lg font-bold text-primary">{userStats.streakDays}</div>
                 <div className="text-xs text-muted-foreground">Day Streak</div>
               </div>
             </div>

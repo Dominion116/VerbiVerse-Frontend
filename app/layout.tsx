@@ -8,8 +8,8 @@ import { Suspense } from "react"
 import Web3Provider from "@/components/providers/web3-provider"
 
 export const metadata: Metadata = {
-  title: "Translation Quiz App",
-  description: "Test your translation skills and earn rewards with blockchain integration",
+  title: "VerbiVerse - Translation Quiz App",
+  description: "Master languages through interactive quizzes and earn rewards",
   generator: "v0.app",
 }
 

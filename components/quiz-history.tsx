@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { History, Calendar, TrendingUp, Filter } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAccount } from "wagmi"
+import { useWallet } from "./providers/web3-provider"
 import type { QuizSession, UserStats } from "@/hooks/use-quiz-progress"
 
 interface QuizHistoryProps {
@@ -14,7 +14,7 @@ interface QuizHistoryProps {
 }
 
 export function QuizHistory({ userStats }: QuizHistoryProps) {
-  const { address } = useAccount()
+  const { address } = useWallet()
   const [history, setHistory] = useState<QuizSession[]>([])
   const [filteredHistory, setFilteredHistory] = useState<QuizSession[]>([])
   const [languageFilter, setLanguageFilter] = useState<string>("all")

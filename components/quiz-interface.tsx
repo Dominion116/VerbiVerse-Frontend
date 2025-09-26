@@ -98,7 +98,7 @@ export function QuizInterface() {
   if (viewMode === "history") {
     return (
       <div>
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Button variant="outline" onClick={() => setViewMode("home")} className="mb-4">
             ← Back to Home
           </Button>
@@ -114,19 +114,18 @@ export function QuizInterface() {
     const currentAnswer = currentQuestion?.userAnswer || ""
 
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="lg:col-span-2">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold">Translation Quiz</h1>
-                  <Badge variant="secondary" className="mt-2">
+                  <h1 className="text-xl sm:text-2xl font-bold">Translation Quiz</h1>
+                  <Badge variant="secondary" className="mt-2 w-fit">
                     {selectedLanguagePair.label}
                   </Badge>
                 </div>
-                <Button variant="outline" onClick={handleGoHome}>
+                <Button variant="outline" onClick={handleGoHome} className="w-fit bg-transparent">
                   Exit Quiz
                 </Button>
               </div>
@@ -139,22 +138,26 @@ export function QuizInterface() {
                 questionNumber={currentSession.currentQuestionIndex + 1}
               />
 
-              {/* Navigation */}
-              <div className="flex justify-between mt-8">
-                <Button variant="outline" onClick={handlePrevious} disabled={currentSession.currentQuestionIndex === 0}>
+              <div className="flex flex-col sm:flex-row justify-between mt-6 sm:mt-8 gap-4">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={currentSession.currentQuestionIndex === 0}
+                  className="w-full sm:w-auto bg-transparent"
+                >
                   Previous
                 </Button>
                 <Button
                   onClick={currentSession.currentQuestionIndex === 4 ? handleCompleteQuiz : handleNext}
                   disabled={!currentAnswer.trim()}
+                  className="w-full sm:w-auto"
                 >
                   {currentSession.currentQuestionIndex === 4 ? "Complete Quiz" : "Next"}
                 </Button>
               </div>
             </div>
 
-            {/* Progress Sidebar */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 order-first lg:order-last">
               <ProgressTracker currentSession={currentSession} userStats={userStats} />
             </div>
           </div>
@@ -165,31 +168,29 @@ export function QuizInterface() {
 
   // Show home view
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="p-3 bg-primary/10 rounded-xl">
-              <Globe className="h-8 w-8 text-primary" />
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="flex items-center justify-center gap-3 mb-4 sm:mb-6">
+            <div className="p-2 sm:p-3 bg-primary/10 rounded-xl">
+              <Globe className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
-            <h1 className="text-4xl font-bold text-balance">Translation Quiz</h1>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-balance">Translation Quiz</h1>
           </div>
-          <p className="text-xl text-muted-foreground text-balance max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg lg:text-xl text-muted-foreground text-balance max-w-2xl mx-auto px-4">
             Test your translation skills with our interactive quiz platform. Connect your wallet to track progress and
             earn rewards.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Setup Cards */}
-            <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+            <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
               {/* Language Selection */}
               <Card className="border-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-primary" />
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Globe className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     Language Pair
                   </CardTitle>
                 </CardHeader>
@@ -200,9 +201,9 @@ export function QuizInterface() {
 
               {/* Wallet Connection */}
               <Card className="border-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Wallet className="h-5 w-5 text-primary" />
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     Wallet Connection
                   </CardTitle>
                 </CardHeader>
@@ -212,31 +213,34 @@ export function QuizInterface() {
               </Card>
             </div>
 
-            {/* Quiz Info */}
             <Card>
-              <CardContent className="pt-6">
-                <div className="grid md:grid-cols-3 gap-6 text-center">
+              <CardContent className="pt-4 sm:pt-6">
+                <div className="grid grid-cols-3 gap-4 sm:gap-6 text-center">
                   <div>
-                    <div className="text-2xl font-bold text-primary mb-2">5</div>
-                    <div className="text-sm text-muted-foreground">Questions per batch</div>
+                    <div className="text-xl sm:text-2xl font-bold text-primary mb-1 sm:mb-2">5</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Questions per batch</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-primary mb-2">200</div>
-                    <div className="text-sm text-muted-foreground">Character limit</div>
+                    <div className="text-xl sm:text-2xl font-bold text-primary mb-1 sm:mb-2">200</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Character limit</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-primary mb-2">
-                      <Trophy className="h-6 w-6 mx-auto" />
+                    <div className="text-xl sm:text-2xl font-bold text-primary mb-1 sm:mb-2">
+                      <Trophy className="h-5 w-5 sm:h-6 sm:w-6 mx-auto" />
                     </div>
-                    <div className="text-sm text-muted-foreground">Earn rewards</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Earn rewards</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4 justify-center">
-              <Button size="lg" onClick={handleStartQuiz} disabled={!isConnected} className="px-8 py-3 text-lg">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                size="lg"
+                onClick={handleStartQuiz}
+                disabled={!isConnected}
+                className="px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto"
+              >
                 Start Quiz
               </Button>
               {userStats.completedQuizzes > 0 && (
@@ -244,7 +248,7 @@ export function QuizInterface() {
                   size="lg"
                   variant="outline"
                   onClick={() => setViewMode("history")}
-                  className="px-8 py-3 text-lg"
+                  className="px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto"
                 >
                   <History className="h-4 w-4 mr-2" />
                   View History
@@ -252,12 +256,11 @@ export function QuizInterface() {
               )}
             </div>
             {!isConnected && (
-              <p className="text-sm text-muted-foreground text-center">Connect your wallet to start the quiz</p>
+              <p className="text-sm text-muted-foreground text-center px-4">Connect your wallet to start the quiz</p>
             )}
           </div>
 
-          {/* Progress Sidebar */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 order-first lg:order-last">
             <ProgressTracker currentSession={currentSession} userStats={userStats} />
           </div>
         </div>

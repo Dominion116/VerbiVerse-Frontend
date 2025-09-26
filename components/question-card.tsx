@@ -24,25 +24,25 @@ export function QuestionCard({ question, answer, onAnswerChange, questionNumber 
 
   return (
     <Card className="border-2">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" />
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Question {questionNumber}
           </CardTitle>
-          <Badge variant="outline">Translate to {question.targetLanguage}</Badge>
+          <Badge variant="outline" className="w-fit">
+            Translate to {question.targetLanguage}
+          </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Original Text */}
+      <CardContent className="space-y-4 sm:space-y-6">
         <div>
           <label className="text-sm font-medium text-muted-foreground mb-2 block">Original Text</label>
-          <div className="p-4 bg-muted/50 rounded-lg border">
-            <p className="text-lg">{question.text}</p>
+          <div className="p-3 sm:p-4 bg-muted/50 rounded-lg border">
+            <p className="text-base sm:text-lg break-words">{question.text}</p>
           </div>
         </div>
 
-        {/* Translation Input */}
         <div>
           <div className="flex justify-between items-center mb-2">
             <label className="text-sm font-medium text-muted-foreground">Your Translation</label>
@@ -56,7 +56,7 @@ export function QuestionCard({ question, answer, onAnswerChange, questionNumber 
             placeholder={`Enter your ${question.targetLanguage} translation here...`}
             value={answer}
             onChange={(e) => onAnswerChange(e.target.value)}
-            className="min-h-[120px] text-lg"
+            className="min-h-[100px] sm:min-h-[120px] text-base sm:text-lg"
             maxLength={maxCharacters}
           />
           {characterCount > maxCharacters && (
