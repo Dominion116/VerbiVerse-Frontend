@@ -18,7 +18,11 @@ export function useWallet() {
   return context;
 }
 
-export default function Web3Provider({ children }: { children: React.ReactNode }) {
+export default function Web3Provider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
   const [provider, setProvider] = useState<any>(null);
@@ -29,11 +33,21 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
       try {
         const wcProvider = await EthereumProvider.init({
           projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
-          chains: [1], // Ethereum mainnet (change to 11155111 for Sepolia testnet)
+          chains: [1], // mainnet
           showQrModal: true,
         });
 
         setProvider(wcProvider);
+
+        // restore existing session if available
+        if (wcProvider.session) {
+          const accounts = wcProvider.session.namespaces.eip155.accounts;
+          if (accounts.length > 0) {
+            const addr = accounts[0].split(":")[2]; // e.g. "eip155:1:0x1234..."
+            setAddress(addr);
+            setIsConnected(true);
+          }
+        }
 
         wcProvider.on("accountsChanged", (accounts: string[]) => {
           setAddress(accounts[0] || null);
@@ -66,20 +80,27 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
 
   // Disconnect wallet
   const disconnect = async () => {
-  if (!provider) return;
-  try {
-    await provider.disconnect(); // closes WC session
-  } catch (err) {
-    console.warn("Provider already disconnected:", err);
-  } finally {
-    setAddress(null);
-    setIsConnected(false);
-  }
-};
+    if (!provider) return;
+    try {
+      await provider.disconnect(); // closes WC session
+    } catch (err) {
+      console.warn("Provider already disconnected:", err);
+    } finally {
+      setAddress(null);
+      setIsConnected(false);
+    }
+  };
 
   return (
-  <WalletContext.Provider value={{ connect, disconnect: () => provider?.disconnect(), address, isConnected }}>
-    {children}
-  </WalletContext.Provider>
-);
+    <WalletContext.Provider
+      value={{
+        connect,
+        disconnect: () => provider?.disconnect(),
+        address,
+        isConnected,
+      }}
+    >
+      {children}
+    </WalletContext.Provider>
+  );
 }
