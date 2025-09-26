@@ -64,6 +64,19 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
     }
   };
 
+  // Disconnect wallet
+  const disconnect = async () => {
+  if (!provider) return;
+  try {
+    await provider.disconnect(); // closes WC session
+  } catch (err) {
+    console.warn("Provider already disconnected:", err);
+  } finally {
+    setAddress(null);
+    setIsConnected(false);
+  }
+};
+
   return (
   <WalletContext.Provider value={{ connect, disconnect: () => provider?.disconnect(), address, isConnected }}>
     {children}
