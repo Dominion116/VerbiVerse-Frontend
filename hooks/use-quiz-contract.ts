@@ -5,20 +5,20 @@ import { useWallet } from "@/components/providers/web3-provider"
 import { QuizContract, type ContractSubmission } from "@/lib/contract"
 
 export function useQuizContract() {
-  const { isConnected, address } = useWallet()
+  const { isConnected, address, provider } = useWallet()
   const [contract, setContract] = useState<QuizContract | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Initialize contract when wallet is connected
   useEffect(() => {
-    if (isConnected && window.ethereum) {
-      const contractInstance = new QuizContract(window.ethereum)
+    if (isConnected && provider) {
+      const contractInstance = new QuizContract(provider)
       setContract(contractInstance)
     } else {
       setContract(null)
     }
-  }, [isConnected])
+  }, [isConnected, provider])
 
   const getRandomBatch = useCallback(async (): Promise<number | null> => {
     if (!contract) return null
@@ -38,28 +38,33 @@ export function useQuizContract() {
   }, [contract])
 
   const submitQuizAnswers = useCallback(
-    async (
-      batchId: number,
-      answers: [string, string, string, string, string],
-      score: number,
-    ): Promise<string | null> => {
-      if (!contract) return null
+  async (
+    batchId: number,
+    answers: [string, string, string, string, string],
+    correctAnswers: [string, string, string, string, string],
+    score: number,
+  ): Promise<string | null> => {
+    if (!contract) return null;
+    setIsLoading(true);
+    setError(null);
 
-      setIsLoading(true)
-      setError(null)
+    try {
+      // Calculate score by comparing answers
+      const score = answers.reduce((total, answer, index) => {
+        return answer.toLowerCase() === correctAnswers[index].toLowerCase() ? total + 1 : total;
+      }, 0);
 
-      try {
-        const txHash = await contract.submitAnswers(batchId, answers, score)
-        return txHash
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to submit answers")
-        return null
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [contract],
-  )
+      const txHash = await contract.submitAnswers(batchId, answers, score);
+      return txHash;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit answers");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  },
+  [contract],
+);
 
   const getUserSubmissions = useCallback(async (): Promise<ContractSubmission[]> => {
     if (!contract || !address) return []

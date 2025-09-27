@@ -1,151 +1,252 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { LanguageSelector } from "./language-selector"
-import { QuestionCard } from "./question-card"
-import { WalletConnection } from "./wallet-connection"
-import { ProgressTracker } from "./progress-tracker"
-import { QuizResults } from "./quiz-results"
-import { QuizHistory } from "./quiz-history"
-import { Globe, Wallet, Trophy, History } from "lucide-react"
-import { useWallet } from "./providers/web3-provider"
-import { useQuizProgress } from "@/hooks/use-quiz-progress"
-import { useQuizContract } from "@/hooks/use-quiz-contract"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { LanguageSelector } from "./language-selector";
+import { QuestionCard } from "./question-card";
+import { WalletConnection } from "./wallet-connection";
+import { ProgressTracker } from "./progress-tracker";
+import { QuizResults } from "./quiz-results";
+import { QuizHistory } from "./quiz-history";
+import { Globe, Wallet, Trophy, History } from "lucide-react";
+import { useWallet } from "./providers/web3-provider";
+import { useQuizProgress } from "@/hooks/use-quiz-progress";
+import { useQuizContract } from "@/hooks/use-quiz-contract";
+import { useIPFSQuiz, type IPFSBatch } from "@/hooks/use-ipfs-quiz";
 
 interface Question {
-  id: string
-  text: string
-  targetLanguage: string
+  id: string;
+  text: string;
+  targetLanguage: string;
 }
 
 interface LanguagePair {
-  from: string
-  to: string
-  label: string
+  from: string;
+  to: string;
+  label: string;
 }
 
-const mockQuestions: Question[] = [
-  { id: "1", text: "Hello, how are you?", targetLanguage: "Spanish" },
-  { id: "2", text: "What is your name?", targetLanguage: "Spanish" },
-  { id: "3", text: "Where do you live?", targetLanguage: "Spanish" },
-  { id: "4", text: "I love learning languages", targetLanguage: "Spanish" },
-  { id: "5", text: "Thank you very much", targetLanguage: "Spanish" },
-]
-
-type ViewMode = "home" | "quiz" | "results" | "history"
+type ViewMode = "home" | "quiz" | "results" | "history";
 
 export function QuizInterface() {
-  const [selectedLanguagePair, setSelectedLanguagePair] = useState<LanguagePair>({
-    from: "English",
-    to: "Spanish",
-    label: "English → Spanish",
-  })
-  const [viewMode, setViewMode] = useState<ViewMode>("home")
-  const { isConnected } = useWallet()
-  const [localWalletState, setLocalWalletState] = useState(false)
-  const [currentBatchId, setCurrentBatchId] = useState<number | null>(null)
-  const [isSubmittingToContract, setIsSubmittingToContract] = useState(false)
+  const [selectedLanguagePair, setSelectedLanguagePair] =
+    useState<LanguagePair>({
+      from: "English",
+      to: "Spanish",
+      label: "English → Spanish",
+    });
+  const [viewMode, setViewMode] = useState<ViewMode>("home");
+  const { isConnected } = useWallet();
+  const [localWalletState, setLocalWalletState] = useState(false);
+  const [currentBatchId, setCurrentBatchId] = useState<number | null>(null);
+  const [currentBatchData, setCurrentBatchData] = useState<IPFSBatch | null>(
+    null
+  );
+  const [isSubmittingToContract, setIsSubmittingToContract] = useState(false);
+  const [isStartingQuiz, setIsStartingQuiz] = useState(false);
 
-  const { currentSession, userStats, startQuiz, updateAnswer, moveToQuestion, completeQuiz, resetQuiz } =
-    useQuizProgress()
+  const {
+    currentSession,
+    userStats,
+    startQuiz,
+    updateAnswer,
+    moveToQuestion,
+    completeQuiz,
+    resetQuiz,
+  } = useQuizProgress();
 
-  const { submitQuizAnswers, getRandomBatch, isContractReady, isLoading: contractLoading } = useQuizContract()
+  const {
+    submitQuizAnswers,
+    getRandomBatch,
+    isContractReady,
+    isLoading: contractLoading,
+  } = useQuizContract();
+
+  const {
+    fetchBatch,
+    getRandomBatchId,
+    calculateScore,
+    isLoading: ipfsLoading,
+    error: ipfsError,
+  } = useIPFSQuiz();
 
   const handleAnswerChange = (answer: string) => {
     if (currentSession) {
-      updateAnswer(currentSession.currentQuestionIndex, answer)
+      updateAnswer(currentSession.currentQuestionIndex, answer);
     }
-  }
+  };
 
   const handleNext = () => {
     if (currentSession && currentSession.currentQuestionIndex < 4) {
-      moveToQuestion(currentSession.currentQuestionIndex + 1)
+      moveToQuestion(currentSession.currentQuestionIndex + 1);
     }
-  }
+  };
 
   const handlePrevious = () => {
     if (currentSession && currentSession.currentQuestionIndex > 0) {
-      moveToQuestion(currentSession.currentQuestionIndex - 1)
+      moveToQuestion(currentSession.currentQuestionIndex - 1);
     }
-  }
+  };
 
   const handleStartQuiz = async () => {
-    if (!isContractReady) {
-      alert("Please connect your wallet first")
-      return
+    if (!isConnected) {
+      alert("Please connect your wallet first");
+      return;
     }
 
+    setIsStartingQuiz(true);
+
     try {
-      const batchId = await getRandomBatch()
-      if (batchId) {
-        setCurrentBatchId(batchId)
-        startQuiz(selectedLanguagePair.label, mockQuestions)
-        setViewMode("quiz")
-      } else {
-        alert("Failed to get quiz batch. Please try again.")
+      // Get a random batch ID (either from contract or fallback)
+      let batchId: number;
+      try {
+        const contractBatchId = await getRandomBatch();
+        batchId = contractBatchId || getRandomBatchId();
+      } catch {
+        batchId = getRandomBatchId();
       }
+
+      console.log("Fetching batch:", batchId);
+
+      // Fetch batch data from IPFS
+      const batchData = await fetchBatch(batchId);
+
+      if (!batchData) {
+        alert("Failed to get quiz batch. Please try again.");
+        return;
+      }
+
+      setCurrentBatchId(batchId);
+      setCurrentBatchData(batchData);
+
+      // Convert IPFS questions to quiz format
+      const questions = batchData.questions.map((q) => ({
+        id: q.id.toString(),
+        text: q.sourceText,
+        targetLanguage: q.targetLanguage,
+      }));
+
+      startQuiz(selectedLanguagePair.label, questions);
+      setViewMode("quiz");
     } catch (error) {
-      console.error("Error starting quiz:", error)
-      alert("Failed to start quiz. Please try again.")
+      console.error("Error starting quiz:", error);
+      alert(
+        `Failed to start quiz: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    } finally {
+      setIsStartingQuiz(false);
     }
-  }
+  };
 
   const handleCompleteQuiz = async () => {
-    if (!currentSession || !currentBatchId || !isContractReady) return
+    if (
+      !currentSession ||
+      !currentBatchId ||
+      !currentBatchData ||
+      !isContractReady
+    )
+      return;
 
-    // Calculate score based on answers (mock implementation)
-    const score = Math.floor(Math.random() * 40) + 60 // 60-100%
-
-    setIsSubmittingToContract(true)
+    setIsSubmittingToContract(true);
 
     try {
-      // Prepare answers array for contract
+      // Get user answers and ensure we have exactly 5 answers
+      const userAnswers = currentSession.questions.map(
+        (q) => q.userAnswer || ""
+      );
+
+      // Ensure we have exactly 5 answers (pad with empty strings if needed)
+      while (userAnswers.length < 5) {
+        userAnswers.push("");
+      }
+
+      // Calculate score using IPFS data
+      const score = calculateScore(currentBatchData.questions, userAnswers);
+
+      console.log("Calculated score:", score);
+
+      // Prepare answers array for contract (5 answers required)
       const answers: [string, string, string, string, string] = [
-        currentSession.questions[0]?.userAnswer || "",
-        currentSession.questions[1]?.userAnswer || "",
-        currentSession.questions[2]?.userAnswer || "",
-        currentSession.questions[3]?.userAnswer || "",
-        currentSession.questions[4]?.userAnswer || "",
-      ]
+        userAnswers[0],
+        userAnswers[1],
+        userAnswers[2],
+        userAnswers[3],
+        userAnswers[4],
+      ];
+
+      const correctAnswers: [string, string, string, string, string] = [
+        currentBatchData.questions[0]?.correctTranslation || "",
+        currentBatchData.questions[1]?.correctTranslation || "",
+        currentBatchData.questions[2]?.correctTranslation || "",
+        currentBatchData.questions[3]?.correctTranslation || "",
+        currentBatchData.questions[4]?.correctTranslation || "",
+      ];
 
       // Submit to blockchain
-      const txHash = await submitQuizAnswers(currentBatchId, answers, score)
+      const txHash = await submitQuizAnswers(
+        currentBatchId,
+        answers,
+        correctAnswers,
+        score
+      );
 
       if (txHash) {
-        console.log("[v0] Quiz submitted to blockchain:", txHash)
+        console.log("Quiz submitted to blockchain:", txHash);
         // Complete the quiz locally
-        completeQuiz(score)
-        setViewMode("results")
+        completeQuiz(score);
+        setViewMode("results");
       } else {
-        throw new Error("Failed to submit to blockchain")
+        throw new Error("Failed to submit to blockchain");
       }
     } catch (error) {
-      console.error("Error submitting to blockchain:", error)
-      alert("Failed to submit quiz to blockchain. Your progress has been saved locally.")
-      // Still complete the quiz locally even if blockchain submission fails
-      completeQuiz(score)
-      setViewMode("results")
+      console.error("Error submitting to blockchain:", error);
+
+      // Calculate score for local completion even if blockchain fails
+      const userAnswers = currentSession.questions.map(
+        (q) => q.userAnswer || ""
+      );
+      const score = currentBatchData
+        ? calculateScore(currentBatchData.questions, userAnswers)
+        : Math.floor(Math.random() * 40) + 60; // Fallback score
+
+      alert(
+        "Failed to submit quiz to blockchain. Your progress has been saved locally."
+      );
+      // Still complete the quiz locally
+      completeQuiz(score);
+      setViewMode("results");
     } finally {
-      setIsSubmittingToContract(false)
+      setIsSubmittingToContract(false);
     }
-  }
+  };
 
   const handleNewQuiz = () => {
-    resetQuiz()
-    setViewMode("home")
-  }
+    resetQuiz();
+    setCurrentBatchData(null);
+    setCurrentBatchId(null);
+    setViewMode("home");
+  };
 
   const handleGoHome = () => {
-    resetQuiz()
-    setViewMode("home")
-  }
+    resetQuiz();
+    setCurrentBatchData(null);
+    setCurrentBatchId(null);
+    setViewMode("home");
+  };
 
   // Show results if quiz is completed
   if (viewMode === "results" && currentSession?.status === "completed") {
-    return <QuizResults session={currentSession} onNewQuiz={handleNewQuiz} onGoHome={handleGoHome} />
+    return (
+      <QuizResults
+        session={currentSession}
+        onNewQuiz={handleNewQuiz}
+        onGoHome={handleGoHome}
+      />
+    );
   }
 
   // Show history view
@@ -153,19 +254,24 @@ export function QuizInterface() {
     return (
       <div>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Button variant="outline" onClick={() => setViewMode("home")} className="mb-4">
+          <Button
+            variant="outline"
+            onClick={() => setViewMode("home")}
+            className="mb-4"
+          >
             ← Back to Home
           </Button>
         </div>
         <QuizHistory userStats={userStats} />
       </div>
-    )
+    );
   }
 
   // Show quiz view
   if (viewMode === "quiz" && currentSession) {
-    const currentQuestion = currentSession.questions[currentSession.currentQuestionIndex]
-    const currentAnswer = currentQuestion?.userAnswer || ""
+    const currentQuestion =
+      currentSession.questions[currentSession.currentQuestionIndex];
+    const currentAnswer = currentQuestion?.userAnswer || "";
 
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -174,7 +280,9 @@ export function QuizInterface() {
             <div className="lg:col-span-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold">Translation Quiz</h1>
+                  <h1 className="text-xl sm:text-2xl font-bold">
+                    Translation Quiz
+                  </h1>
                   <div className="flex gap-2 mt-2">
                     <Badge variant="secondary" className="w-fit">
                       {selectedLanguagePair.label}
@@ -184,9 +292,18 @@ export function QuizInterface() {
                         Batch #{currentBatchId}
                       </Badge>
                     )}
+                    {currentBatchData && (
+                      <Badge variant="outline" className="w-fit capitalize">
+                        {currentBatchData.difficulty}
+                      </Badge>
+                    )}
                   </div>
                 </div>
-                <Button variant="outline" onClick={handleGoHome} className="w-fit bg-transparent">
+                <Button
+                  variant="outline"
+                  onClick={handleGoHome}
+                  className="w-fit bg-transparent"
+                >
                   Exit Quiz
                 </Button>
               </div>
@@ -209,26 +326,33 @@ export function QuizInterface() {
                   Previous
                 </Button>
                 <Button
-                  onClick={currentSession.currentQuestionIndex === 4 ? handleCompleteQuiz : handleNext}
+                  onClick={
+                    currentSession.currentQuestionIndex === 4
+                      ? handleCompleteQuiz
+                      : handleNext
+                  }
                   disabled={!currentAnswer.trim() || isSubmittingToContract}
                   className="w-full sm:w-auto"
                 >
                   {isSubmittingToContract
                     ? "Submitting..."
                     : currentSession.currentQuestionIndex === 4
-                      ? "Complete Quiz"
-                      : "Next"}
+                    ? "Complete Quiz"
+                    : "Next"}
                 </Button>
               </div>
             </div>
 
             <div className="lg:col-span-1 order-first lg:order-last">
-              <ProgressTracker currentSession={currentSession} userStats={userStats} />
+              <ProgressTracker
+                currentSession={currentSession}
+                userStats={userStats}
+              />
             </div>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // Show home view
@@ -240,13 +364,24 @@ export function QuizInterface() {
             <div className="p-2 sm:p-3 bg-primary/10 rounded-xl">
               <Globe className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-balance">Translation Quiz</h1>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-balance">
+              Translation Quiz
+            </h1>
           </div>
           <p className="text-base sm:text-lg lg:text-xl text-muted-foreground text-balance max-w-2xl mx-auto px-4">
-            Test your translation skills with our interactive quiz platform. Connect your wallet to track progress and
-            earn rewards.
+            Test your translation skills with our interactive quiz platform.
+            Connect your wallet to track progress and earn rewards.
           </p>
         </div>
+
+        {/* Show IPFS error if present */}
+        {ipfsError && (
+          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <p className="text-sm text-destructive">
+              IPFS Error: {ipfsError}. Using fallback questions.
+            </p>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
@@ -260,7 +395,10 @@ export function QuizInterface() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <LanguageSelector selectedPair={selectedLanguagePair} onPairChange={setSelectedLanguagePair} />
+                  <LanguageSelector
+                    selectedPair={selectedLanguagePair}
+                    onPairChange={setSelectedLanguagePair}
+                  />
                 </CardContent>
               </Card>
 
@@ -273,7 +411,10 @@ export function QuizInterface() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <WalletConnection isConnected={isConnected} onConnectionChange={setLocalWalletState} />
+                  <WalletConnection
+                    isConnected={isConnected}
+                    onConnectionChange={setLocalWalletState}
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -282,18 +423,28 @@ export function QuizInterface() {
               <CardContent className="pt-4 sm:pt-6">
                 <div className="grid grid-cols-3 gap-4 sm:gap-6 text-center">
                   <div>
-                    <div className="text-xl sm:text-2xl font-bold text-primary mb-1 sm:mb-2">5</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Questions per batch</div>
+                    <div className="text-xl sm:text-2xl font-bold text-primary mb-1 sm:mb-2">
+                      5
+                    </div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">
+                      Questions per batch
+                    </div>
                   </div>
                   <div>
-                    <div className="text-xl sm:text-2xl font-bold text-primary mb-1 sm:mb-2">200</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Character limit</div>
+                    <div className="text-xl sm:text-2xl font-bold text-primary mb-1 sm:mb-2">
+                      200
+                    </div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">
+                      Character limit
+                    </div>
                   </div>
                   <div>
                     <div className="text-xl sm:text-2xl font-bold text-primary mb-1 sm:mb-2">
                       <Trophy className="h-5 w-5 sm:h-6 sm:w-6 mx-auto" />
                     </div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Earn rewards</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">
+                      Earn rewards
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -303,10 +454,21 @@ export function QuizInterface() {
               <Button
                 size="lg"
                 onClick={handleStartQuiz}
-                disabled={!isConnected || contractLoading}
+                disabled={
+                  !isConnected ||
+                  contractLoading ||
+                  ipfsLoading ||
+                  isStartingQuiz
+                }
                 className="px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto"
               >
-                {contractLoading ? "Loading..." : "Start Quiz"}
+                {isStartingQuiz
+                  ? "Loading Quiz..."
+                  : contractLoading
+                  ? "Loading Contract..."
+                  : ipfsLoading
+                  ? "Loading Questions..."
+                  : "Start Quiz"}
               </Button>
               {userStats.completedQuizzes > 0 && (
                 <Button
@@ -321,15 +483,20 @@ export function QuizInterface() {
               )}
             </div>
             {!isConnected && (
-              <p className="text-sm text-muted-foreground text-center px-4">Connect your wallet to start the quiz</p>
+              <p className="text-sm text-muted-foreground text-center px-4">
+                Connect your wallet to start the quiz
+              </p>
             )}
           </div>
 
           <div className="lg:col-span-1 order-first lg:order-last">
-            <ProgressTracker currentSession={currentSession} userStats={userStats} />
+            <ProgressTracker
+              currentSession={currentSession}
+              userStats={userStats}
+            />
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

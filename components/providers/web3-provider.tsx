@@ -8,6 +8,7 @@ type WalletContextType = {
   disconnect: () => Promise<void>;
   address: string | null;
   isConnected: boolean;
+  provider: any;
 };
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -95,7 +96,7 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
   };
 
   return (
-    <WalletContext.Provider value={{ connect, disconnect, address, isConnected }}>
+    <WalletContext.Provider value={{ connect, disconnect, address, isConnected, provider }}>
       {children}
     </WalletContext.Provider>
   );
