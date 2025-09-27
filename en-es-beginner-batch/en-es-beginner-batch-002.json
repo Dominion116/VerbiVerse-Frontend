@@ -1,0 +1,42 @@
+{
+  "batchId": "en-es-beginner-002",
+  "languagePair": { "source": "en", "target": "es" },
+  "difficulty": "beginner",
+  "questions": [
+    {
+      "id": 1,
+      "sourceText": "one",
+      "correctAnswer": "uno",
+      "alternatives": ["primera", "única"]
+    },
+    {
+      "id": 2,
+      "sourceText": "two",
+      "correctAnswer": "dos",
+      "alternatives": ["segunda", "par"]
+    },
+    {
+      "id": 3,
+      "sourceText": "three",
+      "correctAnswer": "tres",
+      "alternatives": ["tercera", "triple"]
+    },
+    {
+      "id": 4,
+      "sourceText": "four",
+      "correctAnswer": "cuatro",
+      "alternatives": ["cuarta", "cuádruple"]
+    },
+    {
+      "id": 5,
+      "sourceText": "five",
+      "correctAnswer": "cinco",
+      "alternatives": ["quinta", "quíntuple"]
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-01-15",
+    "version": "1.0",
+    "category": "numbers"
+  }
+}

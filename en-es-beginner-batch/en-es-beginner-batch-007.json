@@ -1,0 +1,42 @@
+{
+  "batchId": "en-es-beginner-007",
+  "languagePair": { "source": "en", "target": "es" },
+  "difficulty": "beginner",
+  "questions": [
+    {
+      "id": 1,
+      "sourceText": "go",
+      "correctAnswer": "ir",
+      "alternatives": ["vamos", "vaya"]
+    },
+    {
+      "id": 2,
+      "sourceText": "come",
+      "correctAnswer": "venir",
+      "alternatives": ["llegar", "acudir"]
+    },
+    {
+      "id": 3,
+      "sourceText": "eat",
+      "correctAnswer": "comer",
+      "alternatives": ["consumir", "ingerir"]
+    },
+    {
+      "id": 4,
+      "sourceText": "drink",
+      "correctAnswer": "beber",
+      "alternatives": ["tomar", "ingerir"]
+    },
+    {
+      "id": 5,
+      "sourceText": "sleep",
+      "correctAnswer": "dormir",
+      "alternatives": ["descansar", "reposar"]
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-01-15",
+    "version": "1.0",
+    "category": "verbs"
+  }
+}

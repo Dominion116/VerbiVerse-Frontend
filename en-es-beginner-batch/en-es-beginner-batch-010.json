@@ -1,0 +1,42 @@
+{
+  "batchId": "en-es-beginner-010",
+  "languagePair": { "source": "en", "target": "es" },
+  "difficulty": "beginner",
+  "questions": [
+    {
+      "id": 1,
+      "sourceText": "sun",
+      "correctAnswer": "sol",
+      "alternatives": ["solar", "astro"]
+    },
+    {
+      "id": 2,
+      "sourceText": "rain",
+      "correctAnswer": "lluvia",
+      "alternatives": ["agua", "precipitación"]
+    },
+    {
+      "id": 3,
+      "sourceText": "hot",
+      "correctAnswer": "caliente",
+      "alternatives": ["calor", "ardiente"]
+    },
+    {
+      "id": 4,
+      "sourceText": "cold",
+      "correctAnswer": "frío",
+      "alternatives": ["helado", "gélido"]
+    },
+    {
+      "id": 5,
+      "sourceText": "wind",
+      "correctAnswer": "viento",
+      "alternatives": ["aire", "brisa"]
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-01-15",
+    "version": "1.0",
+    "category": "weather"
+  }
+}

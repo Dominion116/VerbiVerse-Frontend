@@ -1,0 +1,42 @@
+{
+  "batchId": "en-es-beginner-008",
+  "languagePair": { "source": "en", "target": "es" },
+  "difficulty": "beginner",
+  "questions": [
+    {
+      "id": 1,
+      "sourceText": "head",
+      "correctAnswer": "cabeza",
+      "alternatives": ["cráneo", "testa"]
+    },
+    {
+      "id": 2,
+      "sourceText": "hand",
+      "correctAnswer": "mano",
+      "alternatives": ["manita", "palma"]
+    },
+    {
+      "id": 3,
+      "sourceText": "foot",
+      "correctAnswer": "pie",
+      "alternatives": ["pata", "extremidad"]
+    },
+    {
+      "id": 4,
+      "sourceText": "eye",
+      "correctAnswer": "ojo",
+      "alternatives": ["vista", "pupila"]
+    },
+    {
+      "id": 5,
+      "sourceText": "mouth",
+      "correctAnswer": "boca",
+      "alternatives": ["labios", "hocico"]
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-01-15",
+    "version": "1.0",
+    "category": "body"
+  }
+}

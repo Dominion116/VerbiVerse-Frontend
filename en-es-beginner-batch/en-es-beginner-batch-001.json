@@ -1,0 +1,42 @@
+{
+  "batchId": "en-es-beginner-001",
+  "languagePair": { "source": "en", "target": "es" },
+  "difficulty": "beginner",
+  "questions": [
+    {
+      "id": 1,
+      "sourceText": "hello",
+      "correctAnswer": "hola",
+      "alternatives": ["buenos días", "buenas tardes"]
+    },
+    {
+      "id": 2,
+      "sourceText": "goodbye",
+      "correctAnswer": "adiós",
+      "alternatives": ["hasta luego", "chao"]
+    },
+    {
+      "id": 3,
+      "sourceText": "please",
+      "correctAnswer": "por favor",
+      "alternatives": ["por favor", "porfis"]
+    },
+    {
+      "id": 4,
+      "sourceText": "thank you",
+      "correctAnswer": "gracias",
+      "alternatives": ["muchas gracias", "te agradezco"]
+    },
+    {
+      "id": 5,
+      "sourceText": "excuse me",
+      "correctAnswer": "disculpe",
+      "alternatives": ["perdón", "con permiso"]
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-01-15",
+    "version": "1.0",
+    "category": "greetings"
+  }
+}

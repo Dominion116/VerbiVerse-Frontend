@@ -1,0 +1,42 @@
+{
+  "batchId": "en-es-beginner-004",
+  "languagePair": { "source": "en", "target": "es" },
+  "difficulty": "beginner",
+  "questions": [
+    {
+      "id": 1,
+      "sourceText": "mother",
+      "correctAnswer": "madre",
+      "alternatives": ["mamá", "mami"]
+    },
+    {
+      "id": 2,
+      "sourceText": "father",
+      "correctAnswer": "padre",
+      "alternatives": ["papá", "papi"]
+    },
+    {
+      "id": 3,
+      "sourceText": "brother",
+      "correctAnswer": "hermano",
+      "alternatives": ["hermanito", "bro"]
+    },
+    {
+      "id": 4,
+      "sourceText": "sister",
+      "correctAnswer": "hermana",
+      "alternatives": ["hermanita", "sis"]
+    },
+    {
+      "id": 5,
+      "sourceText": "child",
+      "correctAnswer": "niño",
+      "alternatives": ["hijo", "chico"]
+    }
+  ],
+  "metadata": {
+    "createdAt": "2024-01-15",
+    "version": "1.0",
+    "category": "family"
+  }
+}
