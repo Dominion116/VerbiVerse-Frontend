@@ -13,6 +13,7 @@ import { QuizHistory } from "./quiz-history"
 import { Globe, Wallet, Trophy, History } from "lucide-react"
 import { useWallet } from "./providers/web3-provider"
 import { useQuizProgress } from "@/hooks/use-quiz-progress"
+import { useQuizContract } from "@/hooks/use-quiz-contract"
 
 interface Question {
   id: string
@@ -45,9 +46,13 @@ export function QuizInterface() {
   const [viewMode, setViewMode] = useState<ViewMode>("home")
   const { isConnected } = useWallet()
   const [localWalletState, setLocalWalletState] = useState(false)
+  const [currentBatchId, setCurrentBatchId] = useState<number | null>(null)
+  const [isSubmittingToContract, setIsSubmittingToContract] = useState(false)
 
   const { currentSession, userStats, startQuiz, updateAnswer, moveToQuestion, completeQuiz, resetQuiz } =
     useQuizProgress()
+
+  const { submitQuizAnswers, getRandomBatch, isContractReady, isLoading: contractLoading } = useQuizContract()
 
   const handleAnswerChange = (answer: string) => {
     if (currentSession) {
@@ -67,16 +72,65 @@ export function QuizInterface() {
     }
   }
 
-  const handleStartQuiz = () => {
-    startQuiz(selectedLanguagePair.label, mockQuestions)
-    setViewMode("quiz")
+  const handleStartQuiz = async () => {
+    if (!isContractReady) {
+      alert("Please connect your wallet first")
+      return
+    }
+
+    try {
+      const batchId = await getRandomBatch()
+      if (batchId) {
+        setCurrentBatchId(batchId)
+        startQuiz(selectedLanguagePair.label, mockQuestions)
+        setViewMode("quiz")
+      } else {
+        alert("Failed to get quiz batch. Please try again.")
+      }
+    } catch (error) {
+      console.error("Error starting quiz:", error)
+      alert("Failed to start quiz. Please try again.")
+    }
   }
 
-  const handleCompleteQuiz = () => {
-    // Mock scoring - in real app this would be more sophisticated
+  const handleCompleteQuiz = async () => {
+    if (!currentSession || !currentBatchId || !isContractReady) return
+
+    // Calculate score based on answers (mock implementation)
     const score = Math.floor(Math.random() * 40) + 60 // 60-100%
-    completeQuiz(score)
-    setViewMode("results")
+
+    setIsSubmittingToContract(true)
+
+    try {
+      // Prepare answers array for contract
+      const answers: [string, string, string, string, string] = [
+        currentSession.questions[0]?.userAnswer || "",
+        currentSession.questions[1]?.userAnswer || "",
+        currentSession.questions[2]?.userAnswer || "",
+        currentSession.questions[3]?.userAnswer || "",
+        currentSession.questions[4]?.userAnswer || "",
+      ]
+
+      // Submit to blockchain
+      const txHash = await submitQuizAnswers(currentBatchId, answers, score)
+
+      if (txHash) {
+        console.log("[v0] Quiz submitted to blockchain:", txHash)
+        // Complete the quiz locally
+        completeQuiz(score)
+        setViewMode("results")
+      } else {
+        throw new Error("Failed to submit to blockchain")
+      }
+    } catch (error) {
+      console.error("Error submitting to blockchain:", error)
+      alert("Failed to submit quiz to blockchain. Your progress has been saved locally.")
+      // Still complete the quiz locally even if blockchain submission fails
+      completeQuiz(score)
+      setViewMode("results")
+    } finally {
+      setIsSubmittingToContract(false)
+    }
   }
 
   const handleNewQuiz = () => {
@@ -121,9 +175,16 @@ export function QuizInterface() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold">Translation Quiz</h1>
-                  <Badge variant="secondary" className="mt-2 w-fit">
-                    {selectedLanguagePair.label}
-                  </Badge>
+                  <div className="flex gap-2 mt-2">
+                    <Badge variant="secondary" className="w-fit">
+                      {selectedLanguagePair.label}
+                    </Badge>
+                    {currentBatchId && (
+                      <Badge variant="outline" className="w-fit">
+                        Batch #{currentBatchId}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <Button variant="outline" onClick={handleGoHome} className="w-fit bg-transparent">
                   Exit Quiz
@@ -149,10 +210,14 @@ export function QuizInterface() {
                 </Button>
                 <Button
                   onClick={currentSession.currentQuestionIndex === 4 ? handleCompleteQuiz : handleNext}
-                  disabled={!currentAnswer.trim()}
+                  disabled={!currentAnswer.trim() || isSubmittingToContract}
                   className="w-full sm:w-auto"
                 >
-                  {currentSession.currentQuestionIndex === 4 ? "Complete Quiz" : "Next"}
+                  {isSubmittingToContract
+                    ? "Submitting..."
+                    : currentSession.currentQuestionIndex === 4
+                      ? "Complete Quiz"
+                      : "Next"}
                 </Button>
               </div>
             </div>
@@ -238,10 +303,10 @@ export function QuizInterface() {
               <Button
                 size="lg"
                 onClick={handleStartQuiz}
-                disabled={!isConnected}
+                disabled={!isConnected || contractLoading}
                 className="px-6 sm:px-8 py-3 text-base sm:text-lg w-full sm:w-auto"
               >
-                Start Quiz
+                {contractLoading ? "Loading..." : "Start Quiz"}
               </Button>
               {userStats.completedQuizzes > 0 && (
                 <Button
