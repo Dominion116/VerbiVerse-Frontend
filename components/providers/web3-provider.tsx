@@ -36,7 +36,7 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
 
         const wcProvider = await EthereumProvider.init({
           projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
-          chains: [1], // Ethereum Mainnet (change to 11155111 for Sepolia testnet)
+          chains: [84532], // Base Sepolia Chain ID
           showQrModal: true,
         });
 
