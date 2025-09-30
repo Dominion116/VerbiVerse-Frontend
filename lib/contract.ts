@@ -274,6 +274,26 @@ export class QuizContract {
       abi: QUIZ_CONTRACT_ABI,
     }
   }
+  
+  async getQuestionsIpfsHash(): Promise<string> {
+    try {
+      const result = await this.provider.request({
+        method: "eth_call",
+        params: [
+          {
+            to: QUIZ_CONTRACT_ADDRESS,
+            data: this.encodeFunction("getQuestionsIpfsHash", []),
+          },
+          "latest",
+        ],
+      });
+      return this.decodeString(result);
+    } catch (error) {
+      console.error("Error getting questions IPFS hash:", error);
+      throw new Error("Failed to retrieve IPFS hash from contract.");
+    }
+  }
+
 
   async getRandomBatch(): Promise<number> {
     try {
@@ -374,6 +394,7 @@ export class QuizContract {
     // For now, we'll create basic function signatures
     const signatures: Record<string, string> = {
       getRandomBatch: "0x8b7afe2e",
+      getQuestionsIpfsHash: "0xc0f152b1",
       submitAnswers: "0x1234abcd", // This would be the actual function signature
       getUserSubmissions: "0x5678efgh",
       getSubmission: "0x9abc1234",
@@ -401,6 +422,22 @@ export class QuizContract {
     } catch {
       return []
     }
+  }
+  
+  private decodeString(data: string): string {
+    if (!data || data === '0x') {
+      return '';
+    }
+    const hex = data.slice(2);
+    const dataOffset = parseInt(hex.slice(0, 64), 16) * 2;
+    const length = parseInt(hex.slice(dataOffset, dataOffset + 64), 16);
+    const hexString = hex.slice(dataOffset + 64, dataOffset + 64 + length * 2);
+
+    let str = '';
+    for (let i = 0; i < hexString.length; i += 2) {
+      str += String.fromCharCode(parseInt(hexString.substr(i, 2), 16));
+    }
+    return str;
   }
 
   private decodeSubmission(data: string): ContractSubmission | null {

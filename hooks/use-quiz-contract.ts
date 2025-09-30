@@ -20,6 +20,24 @@ export function useQuizContract() {
     }
   }, [isConnected, provider])
 
+  const getQuestionsIpfsHash = useCallback(async (): Promise<string | null> => {
+    if (!contract) return null;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const hash = await contract.getQuestionsIpfsHash();
+      return hash;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to get questions IPFS hash");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [contract]);
+
+
   const getRandomBatch = useCallback(async (): Promise<number | null> => {
     if (!contract) return null
 
@@ -98,6 +116,7 @@ export function useQuizContract() {
     isLoading,
     error,
     getRandomBatch,
+    getQuestionsIpfsHash,
     submitQuizAnswers,
     getUserSubmissions,
     isContractReady: !!contract && isConnected,
