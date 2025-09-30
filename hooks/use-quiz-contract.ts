@@ -33,7 +33,7 @@ export function useQuizContract() {
             // Encode the function call data
             const data = encodeFunctionData({
                 abi: QUIZ_CONTRACT_ABI,
-                functionName: 'submitAnswers',
+                functionName: 'submitAnswer',
                 args: [batchId, questions, userAnswers]
             });
 
