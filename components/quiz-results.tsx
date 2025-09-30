@@ -14,7 +14,7 @@ interface QuizResultsProps {
 }
 
 export function QuizResults({ session, onNewQuiz, onGoHome }: QuizResultsProps) {
-  if (!session.score || !session.endTime) return null
+  if (session.score === null || session.score === undefined || !session.endTime) return null
 
   const totalTime = Math.round((session.endTime.getTime() - session.startTime.getTime()) / 1000)
   const averageTimePerQuestion = Math.round(totalTime / session.questions.length)

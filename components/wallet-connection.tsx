@@ -1,23 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Wallet, Check, Loader2 } from "lucide-react";
 import { useWallet } from "./providers/web3-provider";
 
-interface WalletConnectionProps {
-  isConnected: boolean;
-  onConnectionChange: (connected: boolean) => void;
-}
-
-export function WalletConnection({ isConnected, onConnectionChange }: WalletConnectionProps) {
+export function WalletConnection() {
   const { isConnected: walletConnected, address, connect, disconnect } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
-
-  useEffect(() => {
-    onConnectionChange(walletConnected);
-  }, [walletConnected, onConnectionChange]);
 
   const handleConnect = async () => {
     setIsConnecting(true);
