@@ -4,15 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { MessageSquare } from "lucide-react"
-
-interface Question {
-  id: string
-  text: string
-  targetLanguage: string
-}
+import { type IPFSQuestion } from "@/hooks/use-ipfs-quiz"
 
 interface QuestionCardProps {
-  question: Question
+  question: IPFSQuestion
   answer: string
   onAnswerChange: (answer: string) => void
   questionNumber: number
@@ -39,7 +34,7 @@ export function QuestionCard({ question, answer, onAnswerChange, questionNumber 
         <div>
           <label className="text-sm font-medium text-muted-foreground mb-2 block">Original Text</label>
           <div className="p-3 sm:p-4 bg-muted/50 rounded-lg border">
-            <p className="text-base sm:text-lg break-words">{question.text}</p>
+            <p className="text-base sm:text-lg break-words">{question.sourceText}</p>
           </div>
         </div>
 

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { useWallet } from "@/components/providers/web3-provider"
 import { QuizContract, type ContractSubmission } from "@/lib/contract"
+import { type Hex } from "viem"
 
 export function useQuizContract() {
   const { isConnected, address, provider } = useWallet()
@@ -108,7 +109,7 @@ export function useQuizContract() {
     setError(null)
 
     try {
-      const submissionIds = await contract.getUserSubmissions(address)
+      const submissionIds = await contract.getUserSubmissions(address as Hex)
       const submissions: ContractSubmission[] = []
 
       // Fetch details for each submission

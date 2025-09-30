@@ -6,7 +6,7 @@ export interface ContractSubmission {
   batchId: number
   score: number
   timestamp: number
-  answers: [string, string, string, string, string]
+  answers: readonly [string, string, string, string, string]
 }
 
 export class QuizContract {
@@ -97,7 +97,7 @@ export class QuizContract {
 
     } catch (error) {
       console.error("Error getting random batch:", error)
-      return Math.floor(Math.random() * 10) + 1
+      throw new Error("Failed to get random batch from contract.");
     }
   }
 
@@ -176,14 +176,14 @@ export class QuizContract {
         data: result,
       });
 
-      const submission = decoded as any[];
+      const submission = decoded as unknown as readonly [Hex, number, number, number, readonly [string, string, string, string, string]];
 
       return {
         user: submission[0],
         batchId: Number(submission[1]),
         score: Number(submission[2]),
         timestamp: Number(submission[3]),
-        answers: submission[4] as [string, string, string, string, string],
+        answers: submission[4],
       };
 
     } catch (error) {
