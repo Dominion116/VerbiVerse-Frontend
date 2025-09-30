@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { History, Calendar, CheckCircle } from "lucide-react"
 import { useQuizContract } from "@/hooks/use-quiz-contract"
@@ -10,22 +10,20 @@ import { useWallet } from "./providers/web3-provider"
 
 export function QuizHistory() {
   const { address } = useWallet()
-  const { getUserSubmissions, getSubmission, isLoading } = useQuizContract()
+  const { getUserSubmissions, isLoading } = useQuizContract()
   const [history, setHistory] = useState<ContractSubmission[]>([])
 
   useEffect(() => {
     async function fetchHistory() {
-      if (!address) return
-      const submissionIds = await getUserSubmissions()
-      if (submissionIds) {
-        const submissions = await Promise.all(
-          submissionIds.map(id => getSubmission(id))
-        )
+      if (!address) return;
+      const submissions = await getUserSubmissions()
+      if (submissions) {
+        // Submissions are already fetched, no need for Promise.all
         setHistory(submissions.filter(s => s !== null) as ContractSubmission[])
       }
     }
-    fetchHistory()
-  }, [address, getUserSubmissions, getSubmission])
+    if(address) fetchHistory()
+  }, [address, getUserSubmissions])
 
   const formatDate = (timestamp: number) => {
     return new Intl.DateTimeFormat("en-US", {

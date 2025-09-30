@@ -62,6 +62,19 @@ export const QUIZ_CONTRACT_ABI = [
   },
   {
     "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "QUESTIONS_HASH",
     "outputs": [
       {
@@ -120,7 +133,7 @@ export const QUIZ_CONTRACT_ABI = [
         "type": "uint256"
       }
     ],
-    "name": 'getSubmission',
+    "name": "getSubmission",
     "outputs": [
       {
         "internalType": "address",
