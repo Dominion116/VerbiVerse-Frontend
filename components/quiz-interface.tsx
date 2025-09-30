@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { QuestionCard } from "./question-card"
 import { WalletConnection } from "./wallet-connection"
 import { QuizHistory } from "./quiz-history"
+import { AdminPanel } from "./admin-panel"
 import { Globe, Wallet, History } from "lucide-react"
 import { useWallet } from "./providers/web3-provider"
 import { useQuizContract } from "@/hooks/use-quiz-contract"
@@ -96,7 +97,6 @@ export function QuizInterface() {
     setIsSubmittingToContract(true)
 
     try {
-      // Ensure answers are in a fixed-size array for the contract
       const answersForContract: [string, string, string, string, string] = [
         answers[0] || "",
         answers[1] || "",
@@ -115,7 +115,6 @@ export function QuizInterface() {
       )
 
       if (txHash) {
-        // After successful submission, reset and go back to the history view
         resetQuizState()
         setViewMode("history") 
       } else {
@@ -276,6 +275,9 @@ export function QuizInterface() {
             Connect your wallet to start the quiz
             </p>
         )}
+
+        <AdminPanel />
+
       </div>
     </div>
   )

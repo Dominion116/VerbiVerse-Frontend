@@ -91,9 +91,9 @@ export function useIPFSQuiz() {
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
-      console.error(`Error fetching on-chain data: ${errorMessage}`);
+      console.error(`Error fetching batch data: ${errorMessage}`);
       setError(errorMessage);
-      return null
+      return null;
 
     } finally {
       setIsLoading(false);
