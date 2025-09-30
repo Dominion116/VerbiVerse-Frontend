@@ -49,6 +49,19 @@ export const QUIZ_CONTRACT_ABI = [
     type: "event",
   },
   {
+    inputs: [
+      {
+        internalType: "string",
+        name: "_newHash",
+        type: "string",
+      },
+    ],
+    name: "setQuestionsIpfsHash",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "QUESTIONS_HASH",
     outputs: [
@@ -294,6 +307,28 @@ export class QuizContract {
     }
   }
 
+  async setQuestionsIpfsHash(newHash: string): Promise<string> {
+    try {
+      const data = this.encodeFunction("setQuestionsIpfsHash", [newHash]);
+
+      const txHash = await this.provider.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            to: QUIZ_CONTRACT_ADDRESS,
+            data: data,
+            from: await this.getCurrentAccount(),
+          },
+        ],
+      });
+
+      return txHash;
+    } catch (error) {
+      console.error("Error setting questions IPFS hash:", error);
+      throw error;
+    }
+  }
+
 
   async getRandomBatch(): Promise<number> {
     try {
@@ -395,6 +430,7 @@ export class QuizContract {
     const signatures: Record<string, string> = {
       getRandomBatch: "0x8b7afe2e",
       getQuestionsIpfsHash: "0xc0f152b1",
+      setQuestionsIpfsHash: "0xabcdef12", // This would be the actual function signature
       submitAnswers: "0x1234abcd", // This would be the actual function signature
       getUserSubmissions: "0x5678efgh",
       getSubmission: "0x9abc1234",

@@ -37,6 +37,23 @@ export function useQuizContract() {
     }
   }, [contract]);
 
+  const setQuestionsIpfsHash = useCallback(async (newHash: string): Promise<string | null> => {
+    if (!contract) return null;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const txHash = await contract.setQuestionsIpfsHash(newHash);
+      return txHash;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to set questions IPFS hash");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [contract]);
+
 
   const getRandomBatch = useCallback(async (): Promise<number | null> => {
     if (!contract) return null
@@ -117,6 +134,7 @@ export function useQuizContract() {
     error,
     getRandomBatch,
     getQuestionsIpfsHash,
+    setQuestionsIpfsHash,
     submitQuizAnswers,
     getUserSubmissions,
     isContractReady: !!contract && isConnected,
