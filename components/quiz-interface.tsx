@@ -96,7 +96,7 @@ export function QuizInterface() {
     setIsSubmittingToContract(true)
 
     try {
-      const questionsForContract: [string, string, string, string, string] = questions.map(q => q.originalWord) as [string, string, string, string, string]
+      const questionsForContract: [string, string, string, string, string] = questions.map(q => q.sourceText) as [string, string, string, string, string]
 
       const answersForContract: [string, string, string, string, string] = [
         answers[0] || "",
