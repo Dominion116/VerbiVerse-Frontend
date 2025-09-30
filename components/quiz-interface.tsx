@@ -16,7 +16,7 @@ import { useIPFSQuiz, type IPFSQuestion } from "@/hooks/use-ipfs-quiz"
 type ViewMode = "home" | "quiz" | "history"
 
 export function QuizInterface() {
-  const { isConnected } = useWallet()
+  const { isConnected, isContractOwner } = useWallet()
   const [viewMode, setViewMode] = useState<ViewMode>("home")
 
   // State for the current quiz
@@ -276,7 +276,7 @@ export function QuizInterface() {
             </p>
         )}
 
-        <AdminPanel />
+        {isContractOwner && <AdminPanel />}
 
       </div>
     </div>

@@ -159,6 +159,11 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
           });
 
           const ownerAddress = (await contract.read.owner()) as Address;
+
+          // Logging for debugging
+          console.log("Contract Owner Address:", ownerAddress);
+          console.log("Connected User Address:", address);
+
           setIsContractOwner(
             ownerAddress.toLowerCase() === (address as Address).toLowerCase(),
           );
