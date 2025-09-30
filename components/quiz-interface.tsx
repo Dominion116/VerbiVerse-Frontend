@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge"
 import { QuestionCard } from "./question-card"
 import { WalletConnection } from "./wallet-connection"
 import { QuizHistory } from "./quiz-history"
-import { AdminPanel } from "./admin-panel"
 import { Globe, Wallet, History } from "lucide-react"
 import { useWallet } from "./providers/web3-provider"
 import { useQuizContract } from "@/hooks/use-quiz-contract"
@@ -16,7 +15,7 @@ import { useIPFSQuiz, type IPFSQuestion } from "@/hooks/use-ipfs-quiz"
 type ViewMode = "home" | "quiz" | "history"
 
 export function QuizInterface() {
-  const { isConnected, isContractOwner } = useWallet()
+  const { isConnected } = useWallet()
   const [viewMode, setViewMode] = useState<ViewMode>("home")
 
   // State for the current quiz
@@ -97,6 +96,8 @@ export function QuizInterface() {
     setIsSubmittingToContract(true)
 
     try {
+      const questionsForContract: [string, string, string, string, string] = questions.map(q => q.originalWord) as [string, string, string, string, string]
+
       const answersForContract: [string, string, string, string, string] = [
         answers[0] || "",
         answers[1] || "",
@@ -105,13 +106,10 @@ export function QuizInterface() {
         answers[4] || "",
       ]
 
-      const correctAnswers: [string, string, string, string, string] = questions.map(q => q.correctTranslation) as [string, string, string, string, string]
-
       const txHash = await submitQuizAnswers(
         currentBatchId,
+        questionsForContract,
         answersForContract,
-        correctAnswers,
-        0 // Score is calculated on-chain now
       )
 
       if (txHash) {
@@ -275,8 +273,6 @@ export function QuizInterface() {
             Connect your wallet to start the quiz
             </p>
         )}
-
-        {isContractOwner && <AdminPanel />}
 
       </div>
     </div>

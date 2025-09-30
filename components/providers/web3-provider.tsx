@@ -9,18 +9,15 @@ import {
   useState,
 } from 'react';
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
-import { Address, createPublicClient, getContract, http } from 'viem';
-import { baseSepolia } from 'viem/chains';
+import { base } from 'viem/chains';
 
-import { QUIZ_CONTRACT_ABI, QUIZ_CONTRACT_ADDRESS } from '@/lib/contract';
-
-const BASE_SEPOLIA_NETWORK_CONFIG = {
-  id: baseSepolia.id,
-  chainId: `0x${baseSepolia.id.toString(16)}`,
-  chainName: 'Base Sepolia',
-  rpcUrls: [baseSepolia.rpcUrls.default.http[0]],
-  nativeCurrency: baseSepolia.nativeCurrency,
-  blockExplorerUrls: [baseSepolia.blockExplorers.default.url],
+const BASE_MAINNET_NETWORK_CONFIG = {
+  id: base.id,
+  chainId: `0x${base.id.toString(16)}`,
+  chainName: 'Base',
+  rpcUrls: [base.rpcUrls.default.http[0]],
+  nativeCurrency: base.nativeCurrency,
+  blockExplorerUrls: [base.blockExplorers.default.url],
 };
 
 type WalletContextType = {
@@ -31,7 +28,6 @@ type WalletContextType = {
   isConnected: boolean;
   isWrongNetwork: boolean;
   provider: any;
-  isContractOwner: boolean;
 };
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -47,7 +43,6 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
   const [isWrongNetwork, setIsWrongNetwork] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
   const [provider, setProvider] = useState<any>(null);
-  const [isContractOwner, setIsContractOwner] = useState(false);
 
   const didInit = useRef(false);
 
@@ -55,7 +50,6 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
     setAddress(null);
     setIsConnected(false);
     setIsWrongNetwork(false);
-    setIsContractOwner(false);
   }, []);
 
   const disconnect = useCallback(async () => {
@@ -74,17 +68,17 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
     try {
       await provider.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: BASE_SEPOLIA_NETWORK_CONFIG.chainId }],
+        params: [{ chainId: BASE_MAINNET_NETWORK_CONFIG.chainId }],
       });
     } catch (switchError: any) {
       if (switchError.code === 4902) {
         try {
           await provider.request({
             method: 'wallet_addEthereumChain',
-            params: [BASE_SEPOLIA_NETWORK_CONFIG],
+            params: [BASE_MAINNET_NETWORK_CONFIG],
           });
         } catch (addError) {
-          console.error('Failed to add Base Sepolia network:', addError);
+          console.error('Failed to add Base network:', addError);
         }
       } else {
         console.error('Failed to switch network:', switchError);
@@ -102,7 +96,7 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
 
         const wcProvider = await EthereumProvider.init({
           projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
-          chains: [BASE_SEPOLIA_NETWORK_CONFIG.id],
+          chains: [BASE_MAINNET_NETWORK_CONFIG.id],
           showQrModal: true,
         });
 
@@ -114,7 +108,7 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
         });
 
         wcProvider.on('chainChanged', (chainId: string) => {
-          if (parseInt(chainId, 16) !== BASE_SEPOLIA_NETWORK_CONFIG.id) {
+          if (parseInt(chainId, 16) !== BASE_MAINNET_NETWORK_CONFIG.id) {
             disconnect();
           }
         });
@@ -123,7 +117,7 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
 
         if (wcProvider.session) {
           const chainId = await wcProvider.request({ method: 'eth_chainId' });
-          if (chainId !== BASE_SEPOLIA_NETWORK_CONFIG.id) {
+          if (chainId !== BASE_MAINNET_NETWORK_CONFIG.id) {
             await disconnect();
           } else {
             const accounts =
@@ -143,54 +137,18 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
     initProvider();
   }, [disconnect, resetState]);
 
-  useEffect(() => {
-    const checkOwnership = async () => {
-      if (address && isConnected) {
-        try {
-          const publicClient = createPublicClient({
-            chain: baseSepolia,
-            transport: http(),
-          });
-
-          const contract = getContract({
-            address: QUIZ_CONTRACT_ADDRESS,
-            abi: QUIZ_CONTRACT_ABI,
-            client: publicClient,
-          });
-
-          const ownerAddress = (await contract.read.owner()) as Address;
-
-          // Logging for debugging
-          console.log("Contract Owner Address:", ownerAddress);
-          console.log("Connected User Address:", address);
-
-          setIsContractOwner(
-            ownerAddress.toLowerCase() === (address as Address).toLowerCase(),
-          );
-        } catch (error) {
-          console.error('Error checking contract ownership:', error);
-          setIsContractOwner(false);
-        }
-      } else {
-        setIsContractOwner(false);
-      }
-    };
-
-    checkOwnership();
-  }, [address, isConnected]);
-
   const connect = async () => {
     if (!provider) return;
     try {
       await provider.enable();
       const chainId = await provider.request({ method: 'eth_chainId' });
 
-      if (chainId !== BASE_SEPOLIA_NETWORK_CONFIG.id) {
+      if (chainId !== BASE_MAINNET_NETWORK_CONFIG.id) {
         setIsWrongNetwork(true);
         await switchOrAddNetwork();
 
         const newChainId = await provider.request({ method: 'eth_chainId' });
-        if (newChainId !== BASE_SEPOLIA_NETWORK_CONFIG.id) {
+        if (newChainId !== BASE_MAINNET_NETWORK_CONFIG.id) {
           await disconnect();
           return;
         }
@@ -216,7 +174,6 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
         isConnected,
         isWrongNetwork,
         provider,
-        isContractOwner,
       }}>
       {children}
     </WalletContext.Provider>
