@@ -81,10 +81,35 @@ export function useQuizContract() {
         }
     };
 
-    const getUserSubmissions = async (userAddress: string) => {
+    const getUserSubmissions = async (userAddress?: string) => {
+        const addressToUse = userAddress || address;
+        if (!addressToUse) {
+            return [];
+        }
+        
         try {
-            const submissions = await contract.read.getUserSubmissions([userAddress as `0x${string}`]);
-            return submissions;
+            const submissionIds = await contract.read.getUserSubmissions([addressToUse as `0x${string}`]);
+            
+            // Fetch each submission detail
+            const submissions = await Promise.all(
+                submissionIds.map(async (id) => {
+                    try {
+                        const submission = await contract.read.getSubmission([id]);
+                        return {
+                            user: submission[0],
+                            batchId: Number(submission[1]),
+                            score: Number(submission[2]),
+                            timestamp: Number(submission[3]),
+                            answers: submission[4]
+                        };
+                    } catch (error) {
+                        console.error(`Error fetching submission ${id}:`, error);
+                        return null;
+                    }
+                })
+            );
+            
+            return submissions.filter(s => s !== null);
         } catch (error) {
             console.error("Error getting user submissions:", error);
             return [];

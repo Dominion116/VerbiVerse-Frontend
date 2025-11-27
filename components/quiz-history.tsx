@@ -16,13 +16,12 @@ export function QuizHistory() {
   useEffect(() => {
     async function fetchHistory() {
       if (!address) return;
-      const submissions = await getUserSubmissions()
-      if (submissions) {
-        // Submissions are already fetched, no need for Promise.all
-        setHistory(submissions.filter(s => s !== null) as ContractSubmission[])
+      const submissions = await getUserSubmissions();
+      if (submissions && Array.isArray(submissions)) {
+        setHistory(submissions as ContractSubmission[]);
       }
     }
-    if(address) fetchHistory()
+    if(address) fetchHistory();
   }, [address, getUserSubmissions])
 
   const formatDate = (timestamp: number) => {
