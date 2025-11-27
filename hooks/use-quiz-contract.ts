@@ -5,7 +5,7 @@ import { createPublicClient, getContract, http, encodeFunctionData } from "viem"
 import { base } from "viem/chains";
 
 export function useQuizContract() {
-    const { address, provider } = useWallet();
+    const { address, provider, isConnected } = useWallet();
     const [isLoading, setIsLoading] = useState(false);
 
     const publicClient = createPublicClient({
@@ -18,6 +18,8 @@ export function useQuizContract() {
         abi: QUIZ_CONTRACT_ABI,
         client: publicClient
     });
+
+    const isContractReady = isConnected && !!address && !!provider;
 
     const submitQuizAnswers = async (
         batchId: number,
@@ -69,5 +71,43 @@ export function useQuizContract() {
         }
     };
 
-    return { submitQuizAnswers, getRandomBatch, isLoading };
+    const getQuestionsIpfsHash = async (): Promise<string> => {
+        try {
+            const hash = await contract.read.QUESTIONS_DIR_HASH();
+            return hash as string;
+        } catch (error) {
+            console.error("Error getting IPFS hash from contract:", error);
+            throw new Error("Failed to retrieve IPFS hash from contract");
+        }
+    };
+
+    const getUserSubmissions = async (userAddress: string) => {
+        try {
+            const submissions = await contract.read.getUserSubmissions([userAddress as `0x${string}`]);
+            return submissions;
+        } catch (error) {
+            console.error("Error getting user submissions:", error);
+            return [];
+        }
+    };
+
+    const getSubmission = async (submissionId: bigint) => {
+        try {
+            const submission = await contract.read.getSubmission([submissionId]);
+            return submission;
+        } catch (error) {
+            console.error("Error getting submission:", error);
+            return null;
+        }
+    };
+
+    return { 
+        submitQuizAnswers, 
+        getRandomBatch, 
+        getQuestionsIpfsHash,
+        getUserSubmissions,
+        getSubmission,
+        isContractReady,
+        isLoading 
+    };
 }
