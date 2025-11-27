@@ -98,6 +98,15 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
           projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
           chains: [BASE_MAINNET_NETWORK_CONFIG.id],
           showQrModal: true,
+          metadata: {
+            name: 'VerbiVerse',
+            description: 'Learn languages and earn rewards',
+            url: typeof window !== 'undefined' ? window.location.origin : 'https://verbiverse.app',
+            icons: ['https://avatars.githubusercontent.com/u/37784886']
+          },
+          rpcMap: {
+            [BASE_MAINNET_NETWORK_CONFIG.id]: BASE_MAINNET_NETWORK_CONFIG.rpcUrls[0]
+          }
         });
 
         setProvider(wcProvider);
