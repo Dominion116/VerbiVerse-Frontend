@@ -92,10 +92,24 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
 
     const initProvider = async () => {
       try {
-        localStorage.removeItem('wc@2:client:0.3//session');
+        // Clear all WalletConnect storage to prevent conflicts
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('wc@2') || key.startsWith('WALLETCONNECT')) {
+            localStorage.removeItem(key);
+          }
+        });
+
+        const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+        
+        if (!projectId) {
+          console.error('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set');
+          return;
+        }
+
+        console.log('Initializing WalletConnect with project ID:', projectId.substring(0, 8) + '...');
 
         const wcProvider = await EthereumProvider.init({
-          projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+          projectId,
           chains: [BASE_MAINNET_NETWORK_CONFIG.id],
           showQrModal: true,
           relayUrl: 'wss://relay.walletconnect.com',
@@ -110,6 +124,7 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
           }
         });
 
+        console.log('WalletConnect provider initialized successfully');
         setProvider(wcProvider);
 
         wcProvider.on('accountsChanged', (accounts: string[]) => {
@@ -141,6 +156,7 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
         }
       } catch (err) {
         console.error('Failed to init WalletConnect:', err);
+        console.error('Error details:', err instanceof Error ? err.message : String(err));
       }
     };
 
