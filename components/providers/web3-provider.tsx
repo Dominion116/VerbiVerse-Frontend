@@ -11,6 +11,13 @@ import {
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
 import { base } from 'viem/chains';
 
+// Extend Window interface to include ethereum
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 const BASE_MAINNET_NETWORK_CONFIG = {
   id: base.id,
   chainId: `0x${base.id.toString(16)}`,
@@ -21,13 +28,14 @@ const BASE_MAINNET_NETWORK_CONFIG = {
 };
 
 type WalletContextType = {
-  connect: () => Promise<void>;
+  connect: (preferBrowserWallet?: boolean) => Promise<void>;
   disconnect: () => Promise<void>;
   switchOrAddNetwork: () => Promise<void>;
   address: string | null;
   isConnected: boolean;
   isWrongNetwork: boolean;
   provider: any;
+  hasBrowserWallet: boolean;
 };
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -43,6 +51,8 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
   const [isWrongNetwork, setIsWrongNetwork] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
   const [provider, setProvider] = useState<any>(null);
+  const [hasBrowserWallet, setHasBrowserWallet] = useState(false);
+  const [wcProvider, setWcProvider] = useState<any>(null);
 
   const didInit = useRef(false);
 
@@ -53,15 +63,21 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
   }, []);
 
   const disconnect = useCallback(async () => {
-    if (!provider) return;
     try {
-      await provider.disconnect();
+      // Disconnect WalletConnect if it's the active provider
+      if (wcProvider && wcProvider.session) {
+        await wcProvider.disconnect();
+      }
+      
+      // For browser wallets, just reset the state (they don't have a disconnect method)
+      // The user would need to disconnect from the wallet extension itself
     } catch (err) {
-      // It's okay if the session was already cleared
+      console.warn('Disconnect error (this is usually fine):', err);
     } finally {
+      setProvider(null);
       resetState();
     }
-  }, [provider, resetState]);
+  }, [wcProvider, resetState]);
 
   const switchOrAddNetwork = async () => {
     if (!provider) return;
@@ -90,6 +106,12 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
     if (didInit.current) return;
     didInit.current = true;
 
+    // Check if browser wallet is available
+    if (typeof window !== 'undefined' && window.ethereum) {
+      setHasBrowserWallet(true);
+      console.log('Browser wallet detected');
+    }
+
     const initProvider = async () => {
       try {
         // Clear all WalletConnect storage to prevent conflicts
@@ -108,7 +130,7 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
 
         console.log('Initializing WalletConnect with project ID:', projectId.substring(0, 8) + '...');
 
-        const wcProvider = await EthereumProvider.init({
+        const wc = await EthereumProvider.init({
           projectId,
           chains: [BASE_MAINNET_NETWORK_CONFIG.id],
           showQrModal: true,
@@ -125,32 +147,33 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
         });
 
         console.log('WalletConnect provider initialized successfully');
-        setProvider(wcProvider);
+        setWcProvider(wc);
 
-        wcProvider.on('accountsChanged', (accounts: string[]) => {
+        wc.on('accountsChanged', (accounts: string[]) => {
           setAddress(accounts[0] || null);
           setIsConnected(accounts.length > 0);
         });
 
-        wcProvider.on('chainChanged', (chainId: string) => {
+        wc.on('chainChanged', (chainId: string) => {
           if (parseInt(chainId, 16) !== BASE_MAINNET_NETWORK_CONFIG.id) {
             disconnect();
           }
         });
 
-        wcProvider.on('disconnect', () => resetState());
+        wc.on('disconnect', () => resetState());
 
-        if (wcProvider.session) {
-          const chainId = await wcProvider.request({ method: 'eth_chainId' });
+        if (wc.session) {
+          const chainId = await wc.request({ method: 'eth_chainId' });
           if (chainId !== BASE_MAINNET_NETWORK_CONFIG.id) {
             await disconnect();
           } else {
             const accounts =
-              wcProvider.session.namespaces.eip155?.accounts || [];
+              wc.session.namespaces.eip155?.accounts || [];
             if (accounts.length > 0) {
               const addr = accounts[0].split(':')[2];
               setAddress(addr);
               setIsConnected(true);
+              setProvider(wc);
             }
           }
         }
@@ -163,29 +186,69 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
     initProvider();
   }, [disconnect, resetState]);
 
-  const connect = async () => {
-    if (!provider) return;
+  const connect = async (preferBrowserWallet = true) => {
     try {
-      await provider.enable();
-      const chainId = await provider.request({ method: 'eth_chainId' });
+      // Try browser wallet first if preferred and available
+      if (preferBrowserWallet && hasBrowserWallet && window.ethereum) {
+        console.log('Connecting to browser wallet...');
+        const browserProvider = window.ethereum;
+        
+        const accounts = await browserProvider.request({ 
+          method: 'eth_requestAccounts' 
+        });
+        
+        if (accounts.length > 0) {
+          setProvider(browserProvider);
+          setAddress(accounts[0]);
+          setIsConnected(true);
 
-      if (chainId !== BASE_MAINNET_NETWORK_CONFIG.id) {
-        setIsWrongNetwork(true);
-        await switchOrAddNetwork();
+          // Setup browser wallet listeners
+          browserProvider.on('accountsChanged', (accs: string[]) => {
+            setAddress(accs[0] || null);
+            setIsConnected(accs.length > 0);
+          });
 
-        const newChainId = await provider.request({ method: 'eth_chainId' });
-        if (newChainId !== BASE_MAINNET_NETWORK_CONFIG.id) {
-          await disconnect();
+          browserProvider.on('chainChanged', () => {
+            window.location.reload();
+          });
+
+          // Check network
+          const chainId = await browserProvider.request({ method: 'eth_chainId' });
+          if (parseInt(chainId, 16) !== BASE_MAINNET_NETWORK_CONFIG.id) {
+            setIsWrongNetwork(true);
+            await switchOrAddNetwork();
+          } else {
+            setIsWrongNetwork(false);
+          }
           return;
         }
       }
 
-      setIsWrongNetwork(false);
-      const accounts = await provider.request({ method: 'eth_accounts' });
-      setAddress(accounts[0] || null);
-      setIsConnected(accounts.length > 0);
+      // Fall back to WalletConnect
+      if (wcProvider) {
+        console.log('Connecting to WalletConnect...');
+        await wcProvider.enable();
+        const chainId = await wcProvider.request({ method: 'eth_chainId' });
+
+        if (chainId !== BASE_MAINNET_NETWORK_CONFIG.id) {
+          setIsWrongNetwork(true);
+          await switchOrAddNetwork();
+
+          const newChainId = await wcProvider.request({ method: 'eth_chainId' });
+          if (newChainId !== BASE_MAINNET_NETWORK_CONFIG.id) {
+            await disconnect();
+            return;
+          }
+        }
+
+        setIsWrongNetwork(false);
+        const accounts = await wcProvider.request({ method: 'eth_accounts' });
+        setAddress(accounts[0] || null);
+        setIsConnected(accounts.length > 0);
+        setProvider(wcProvider);
+      }
     } catch (err) {
-      console.error('WalletConnect connection failed:', err);
+      console.error('Wallet connection failed:', err);
       await disconnect();
     }
   };
@@ -200,6 +263,7 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
         isConnected,
         isWrongNetwork,
         provider,
+        hasBrowserWallet,
       }}>
       {children}
     </WalletContext.Provider>
