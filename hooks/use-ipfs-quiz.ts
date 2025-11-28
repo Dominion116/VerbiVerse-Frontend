@@ -2,6 +2,10 @@
 
 import { useState, useCallback } from "react"
 import { useQuizContract } from "@/hooks/use-quiz-contract"
+import { getMockBatch } from "@/lib/mock-quiz-data"
+
+// IPFS CID for the quiz data directory
+const IPFS_QUIZ_ROOT_HASH = "bafybeihc4gvq5zi4ihkowt7mjdm53yliknbijd7um6ye6zdfge4vooppve";
 
 export interface IPFSQuestion {
   id: number
@@ -67,24 +71,40 @@ export function useIPFSQuiz() {
         throw new Error("Wallet not connected or contract not ready.");
       }
 
-      const rootHash = await getQuestionsIpfsHash();
-      console.log("Attempting to fetch IPFS data with hash:", rootHash);
-
-      if (!rootHash) {
-        throw new Error("IPFS hash not found in smart contract. Please ensure the QUESTIONS_HASH is set correctly.");
+      // Try to get IPFS hash from contract
+      let rootHash: string | null = null;
+      try {
+        rootHash = await getQuestionsIpfsHash();
+        console.log("IPFS hash from contract:", rootHash);
+      } catch (err) {
+        console.warn("Could not get IPFS hash from contract:", err);
       }
 
-      const ipfsData: IPFSRoot = await fetchFromIPFS(rootHash);
-
-      if (!ipfsData || !Array.isArray(ipfsData.batches)) {
-        throw new Error("Invalid data structure in fetched IPFS file.");
+      // If no hash from contract, use the hardcoded IPFS hash
+      if (!rootHash || rootHash.trim() === '') {
+        console.log("Using hardcoded IPFS hash:", IPFS_QUIZ_ROOT_HASH);
+        rootHash = IPFS_QUIZ_ROOT_HASH;
       }
 
-      const batch = ipfsData.batches.find(b => b.batchId === batchId);
+      // Fetch the batch file directly from IPFS
+      const batchFileName = `en-es-beginner-batch-${String(batchId).padStart(3, '0')}.json`;
+      const batchHash = `${rootHash}/${batchFileName}`;
+      
+      console.log(`Fetching batch ${batchId} from IPFS:`, batchFileName);
+      
+      const batchData = await fetchFromIPFS(batchHash);
 
-      if (!batch) {
-        throw new Error(`Batch with ID ${batchId} not found in IPFS data.`);
+      if (!batchData || !Array.isArray(batchData.questions)) {
+        throw new Error("Invalid batch data structure from IPFS.");
       }
+
+      const batch: IPFSBatch = {
+        batchId: batchData.batchId || batchId,
+        questions: batchData.questions,
+        createdAt: batchData.createdAt || new Date().toISOString(),
+        difficulty: batchData.difficulty || "easy",
+        languagePair: batchData.languagePair || "en-es"
+      };
 
       setCachedBatches(prev => new Map(prev.set(batchId, batch)));
       return batch;
